@@ -121,9 +121,9 @@ class DWA():
 
         return min_ang_velo, max_ang_velo, min_velo, max_velo
 
-    def _eval_path(self, paths, g_x, g_y, state, obastacles):
+    def _eval_path(self, paths, g_x, g_y, state, obstacles):
         # 一番近い障害物判定
-        nearest_obs = self._calc_nearest_obs(state, obastacles)
+        nearest_obs = self._calc_nearest_obs(state, obstacles)
 
         score_heading_angles = []
         score_heading_velos = []
@@ -138,26 +138,30 @@ class DWA():
             # (3) obstacle
             score_obstacles.append(self._obstacle(path, nearest_obs))
 
-        # print('angle = {0}'.format(score_heading_angles))
-        # print('velo = {0}'.format(score_heading_velos))
-        # print('obs = {0}'.format(score_obstacles))
-
         # 正規化
-        for scores in [score_heading_angles, score_heading_velos, score_obstacles]:
-            scores = min_max_normalize(scores)
+        score_heading_angles = min_max_normalize(score_heading_angles)
+        score_heading_velos = min_max_normalize(score_heading_velos)
+        score_obstacles = min_max_normalize(score_obstacles)
 
-        score = 0.0
-        # 最小pathを探索
+        score = -float('inf')  # スコアの初期値を負の無限大に設定
+        opt_path = None        # opt_path を初期化
+
+        # 最適なpathを探索
         for k in range(len(paths)):
-            temp_score = 0.0
-
-            temp_score = self.weight_angle * score_heading_angles[k] + \
-                         self.weight_velo * score_heading_velos[k] + \
-                         self.weight_obs * score_obstacles[k]
+            temp_score = (self.weight_angle * score_heading_angles[k] + 
+                          self.weight_velo * score_heading_velos[k] + 
+                          self.weight_obs * score_obstacles[k])
 
             if temp_score > score:
                 opt_path = paths[k]
                 score = temp_score
+
+        if opt_path is None:
+            # フォールバック: 最初のpathを選択
+            if paths:
+                opt_path = paths[0]
+            else:
+                raise ValueError("Pathが生成されていません。")
 
         return opt_path
 
@@ -190,7 +194,7 @@ class DWA():
         return score_heading_velo
 
     def _calc_nearest_obs(self, state, obstacles):
-        area_dis_to_obs = 5 # パラメータ（何メートル考慮するか，本当は制動距離）
+        area_dis_to_obs = 5 # パラメー（何メートル考慮するか，本当は制動距離）
         nearest_obs = [] # あるエリアに入ってる障害物
 
         for obs in obstacles:
