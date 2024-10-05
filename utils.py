@@ -3,17 +3,21 @@ import numpy as np
 
 def min_max_normalize(data):
 
-    data = np.array(data)
+    data = np.array(data, dtype=np.float64)
 
-    max_data = max(data)
-    min_data = min(data)
+    # データにinfやnanが含まれていないか確認
+    if not np.all(np.isfinite(data)):
+        raise ValueError("データに無限大またはNaNが含まれています。")
+
+    max_data = np.max(data)
+    min_data = np.min(data)
 
     if max_data - min_data == 0:
-        data = [0.0 for i in range(len(data))]
+        normalized_data = np.zeros_like(data)
     else:
-        data = (data - min_data) / (max_data - min_data)
+        normalized_data = (data - min_data) / (max_data - min_data)
 
-    return data
+    return normalized_data
 # 角度補正用
 def angle_range_corrector(angle):
 

@@ -128,15 +128,30 @@ class DWA():
         score_heading_angles = []
         score_heading_velos = []
         score_obstacles = []
+        valid_paths = []
 
         # 全てのpathで評価を検索
         for path in paths:
             # (1) heading_angle
-            score_heading_angles.append(self._heading_angle(path, g_x, g_y))
+            angle_score = self._heading_angle(path, g_x, g_y)
             # (2) heading_velo
-            score_heading_velos.append(self._heading_velo(path))
+            velo_score = self._heading_velo(path)
             # (3) obstacle
-            score_obstacles.append(self._obstacle(path, nearest_obs))
+            obs_score = self._obstacle(path, nearest_obs)
+
+            # パスが有効かチェック（スコアにinfやnanが含まれていないか）
+            if np.isfinite(angle_score) and np.isfinite(velo_score) and np.isfinite(obs_score):
+                score_heading_angles.append(angle_score)
+                score_heading_velos.append(velo_score)
+                score_obstacles.append(obs_score)
+                valid_paths.append(path)
+            else:
+                # 無効なパスはスキップ
+                continue
+
+        # 有効なパスが存在しない場合
+        if not valid_paths:
+            raise ValueError("有効なPathが存在しません。全てのPathが障害物と衝突しています。")
 
         # 正規化
         score_heading_angles = min_max_normalize(score_heading_angles)
@@ -147,19 +162,19 @@ class DWA():
         opt_path = None        # opt_path を初期化
 
         # 最適なpathを探索
-        for k in range(len(paths)):
+        for k in range(len(valid_paths)):
             temp_score = (self.weight_angle * score_heading_angles[k] + 
                           self.weight_velo * score_heading_velos[k] + 
                           self.weight_obs * score_obstacles[k])
 
             if temp_score > score:
-                opt_path = paths[k]
+                opt_path = valid_paths[k]
                 score = temp_score
 
         if opt_path is None:
             # フォールバック: 最初のpathを選択
-            if paths:
-                opt_path = paths[0]
+            if valid_paths:
+                opt_path = valid_paths[0]
             else:
                 raise ValueError("Pathが生成されていません。")
 
