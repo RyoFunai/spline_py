@@ -4,7 +4,7 @@ class Const_goal:
         self.traj_g_y = []
 
     def calc_goal(self, time_step):
-        if time_step <= 100:
+        if time_step <= 150:
             g_x = 10.0
             g_y = 10.0
         else:

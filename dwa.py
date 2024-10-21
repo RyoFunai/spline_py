@@ -53,6 +53,7 @@ class DWA():
         self.weight_angle = WEIGHT_ANGLE
         self.weight_velo = WEIGHT_VELOCITY
         self.weight_obs = WEIGHT_OBSTACLE
+        self.weight_distance = WEIGHT_DISTANCE  # 追加
 
         # すべてのPathを保存
         self.traj_paths = []
@@ -153,26 +154,42 @@ class DWA():
         if not valid_paths:
             raise ValueError("有効なPathが存在しません。全てのPathが障害物と衝突しています。")
 
-        # 正規化
+        # スコアの正規化
         score_heading_angles = min_max_normalize(score_heading_angles)
         score_heading_velos = min_max_normalize(score_heading_velos)
         score_obstacles = min_max_normalize(score_obstacles)
 
+        # ゴールへの距離を計算
+        distances_to_goal = []
+        for path in valid_paths:
+            last_x = path.x[-1]
+            last_y = path.y[-1]
+            distance = math.hypot(g_x - last_x, g_y - last_y)
+            distances_to_goal.append(distance)
+
+        # 距離を反転（近いほど良い）して正規化
+        inverted_distances = [-d for d in distances_to_goal]
+        distances_normalized = min_max_normalize(inverted_distances)
+
+        # スコアの正規化後の距離を格納（オプションで詳細な評価用）
+        # distances_normalized = min_max_normalize(distances_to_goal)  # そのまま正規化も可能
+
+        # 最適なpathを探索
         score = -float('inf')  # スコアの初期値を負の無限大に設定
         opt_path = None        # opt_path を初期化
 
-        # 最適なpathを探索
         for k in range(len(valid_paths)):
             temp_score = (self.weight_angle * score_heading_angles[k] + 
                           self.weight_velo * score_heading_velos[k] + 
-                          self.weight_obs * score_obstacles[k])
+                          self.weight_obs * score_obstacles[k] +
+                          self.weight_distance * distances_normalized[k])  # 距離スコアを加算
 
             if temp_score > score:
                 opt_path = valid_paths[k]
                 score = temp_score
 
         if opt_path is None:
-            # フォールバック: 最初のpathを選択
+            # フォールバック: 有効なパスがあれば最初を選択
             if valid_paths:
                 opt_path = valid_paths[0]
             else:
@@ -222,7 +239,7 @@ class DWA():
 
     def _obstacle(self, path, nearest_obs):
         # 障害物回避（エリアに入ったらその線は使わない）/ (障害物ともっとも近い距離距離)))
-        score_obstacle = 2
+        score_obstacle = 0.1
         temp_dis_to_obs = 0.0
 
         for i in range(len(path.x)):
@@ -243,3 +260,5 @@ class DWA():
             break
 
         return score_obstacle
+
+
