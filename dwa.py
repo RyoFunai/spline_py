@@ -233,7 +233,7 @@ class DWA():
                     score_obstacle = temp_dis_to_obs # 一番近いところ
 
                 # そもそも中に入ってる判定
-                if temp_dis_to_obs < obs.size + 0.75: # マージン
+                if temp_dis_to_obs < obs.size:
                     score_obstacle = -float('inf')
                     break
 
