@@ -32,5 +32,4 @@ class Two_wheeled_robot:
         self.x = next_x
         self.y = next_y
         self.th = next_th
-
         return self.x, self.y, self.th

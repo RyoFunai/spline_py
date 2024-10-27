@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as ani
 import math
 import sys
+from config import X_MIN, X_MAX, Y_MIN, Y_MAX
 
 # 円を書く
 def write_circle(center_x, center_y, angle, circle_size=0.2):#人の大きさは半径15cm
@@ -44,19 +45,12 @@ class Obstacle_anim():
 
 class Animation_robot():
     def __init__(self):
+        plt.rcParams['figure.figsize'] = [19.2, 10.8]  # 1920x1080 resolution
+        plt.rcParams['figure.dpi'] = 100
         self.fig = plt.figure()
         self.axis = self.fig.add_subplot(111)
 
     def fig_set(self):
-        # 初期設定 軸
-        MAX_x = 12
-        min_x = -12
-        MAX_y = 12
-        min_y = -12
-
-        self.axis.set_xlim(min_x, MAX_x)
-        self.axis.set_ylim(min_y, MAX_y)
-
         # 軸
         self.axis.grid(True)
 
@@ -72,8 +66,11 @@ class Animation_robot():
 
         plt.show()
 
-    def func_anim_plot(self, traj_x, traj_y, traj_th, traj_paths, traj_g_x, traj_g_y, traj_opt, obstacles):
-        # selfにしておく
+    def func_anim_plot(self, traj_x, traj_y, traj_th, traj_paths, traj_g_x, traj_g_y, traj_opt, obstacles, course):
+        # コースを描画
+        self.plot_course(course)
+
+        # 以下は既存のコード
         self.traj_x = traj_x
         self.traj_y = traj_y
         self.traj_th = traj_th
@@ -171,3 +168,11 @@ class Animation_robot():
 
         return self.dwa_imgs
 
+    def plot_course(self, course):
+        self.axis.plot(course.left_lane[:, 0], course.left_lane[:, 1], 'k-', linewidth=2)
+        self.axis.plot(course.right_lane[:, 0], course.right_lane[:, 1], 'k-', linewidth=2)
+        self.axis.plot(course.center_lane[:, 0], course.center_lane[:, 1], 'r--', linewidth=1)
+
+    def maximize_window(self):
+        manager = plt.get_current_fig_manager()
+        manager.full_screen_toggle()  # toggle fullscreen mode

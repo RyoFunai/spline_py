@@ -3,6 +3,9 @@ import numpy as np
 from utils import min_max_normalize, angle_range_corrector
 from obstacle import Obstacle
 from config import *
+from course import Course
+import sys
+from config import LOOKAHEAD_DISTANCE
 
 class Simulator_DWA_robot:
     def __init__(self):
@@ -53,19 +56,35 @@ class DWA():
         self.weight_angle = WEIGHT_ANGLE
         self.weight_velo = WEIGHT_VELOCITY
         self.weight_obs = WEIGHT_OBSTACLE
-        self.weight_distance = WEIGHT_DISTANCE  # 追加
+        self.weight_distance = WEIGHT_DISTANCE
+        try:
+            self.course = Course(LEFT_LANE_BOUND_FILE, RIGHT_LANE_BOUND_FILE, CENTER_LANE_LINE_FILE)
+        except FileNotFoundError as e:
+            print(f"ラー: {e}")
+            print("CSVファイルのパスが正しいか確認してください。")
+            sys.exit(1)
 
         # すべてのPathを保存
         self.traj_paths = []
         self.traj_opt = []
 
-    def calc_input(self, g_x, g_y, state, obstacles): # stateはロボットクラスでくる
+    def calc_input(self, robot, obstacles):
         # Path作成
-        paths = self._make_path(state)
+        paths = self._make_path(robot)
+        print(f"Number of paths generated: {len(paths)}")
+        
         # Path評価
-        opt_path = self._eval_path(paths, g_x, g_y, state, obstacles)
+        g_x, g_y = self.course.get_next_target_point(robot.x, robot.y, robot.th, LOOKAHEAD_DISTANCE)
+        print(f"Next target point: ({g_x}, {g_y})")
+        
+        opt_path = self._eval_path(paths, g_x, g_y, robot, obstacles)
 
         self.traj_opt.append(opt_path)
+        if not hasattr(self, 'traj_g_x'):
+            self.traj_g_x = []
+            self.traj_g_y = []
+        self.traj_g_x.append(g_x)
+        self.traj_g_y.append(g_y)
 
         return paths, opt_path
 
@@ -125,21 +144,25 @@ class DWA():
     def _eval_path(self, paths, g_x, g_y, state, obstacles):
         # 一番近い障害物判定
         nearest_obs = self._calc_nearest_obs(state, obstacles)
-
+        valid_paths = []
         score_heading_angles = []
         score_heading_velos = []
         score_obstacles = []
-        valid_paths = []
-
+        # valid_paths_count = 0
+        
         # 全てのpathで評価を検索
         for path in paths:
+            # コース境界内にあるかチェック
+            # if not self.course.is_path_within_bounds(path.x, path.y):
+            #     continue
+            # パスが有効かチェック（スコアにinfやnanが含まれていないか）
+            # valid_paths_count += 1
             # (1) heading_angle
             angle_score = self._heading_angle(path, g_x, g_y)
             # (2) heading_velo
             velo_score = self._heading_velo(path)
             # (3) obstacle
             obs_score = self._obstacle(path, nearest_obs)
-
             # パスが有効かチェック（スコアにinfやnanが含まれていないか）
             if np.isfinite(angle_score) and np.isfinite(velo_score) and np.isfinite(obs_score):
                 score_heading_angles.append(angle_score)
@@ -150,9 +173,12 @@ class DWA():
                 # 無効なパスはスキップ
                 continue
 
+        # print(f"Valid paths: {valid_paths_count}")
+        
         # 有効なパスが存在しない場合
         if not valid_paths:
-            raise ValueError("有効なPathが存在しません。全てのPathが障害物と衝突しています。")
+            print("No valid paths found. All paths are either out of bounds or colliding with obstacles.")
+            raise ValueError("有効なPathが存在しません。全てのPathがコース外か障害物と衝突しています。")
 
         # スコアの正規化
         score_heading_angles = min_max_normalize(score_heading_angles)
@@ -219,7 +245,7 @@ class DWA():
 
         return score_angle
 
-    def _heading_velo(self, path): # 速く進んでいるか（直進）
+    def _heading_velo(self, path): # 速くんでいるか（直進）
 
         score_heading_velo = path.u_v
 
@@ -260,5 +286,12 @@ class DWA():
             break
 
         return score_obstacle
+
+
+
+
+
+
+
 
 
