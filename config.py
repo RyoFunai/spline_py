@@ -42,7 +42,7 @@ RIGHT_LANE_BOUND_FILE = 'csv_files/right_lane_bound.csv'
 CENTER_LANE_LINE_FILE = 'csv_files/center_lane_line.csv'
 
 # Main parameters
-MAX_ITERATIONS = 1000
+MAX_ITERATIONS = 10
 
 X_MIN, X_MAX = -30, 60
 Y_MIN, Y_MAX = -20, 70

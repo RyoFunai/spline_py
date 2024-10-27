@@ -1,4 +1,5 @@
 import numpy as np
+import time
 from robot import Two_wheeled_robot
 from goal import Const_goal
 from dwa import DWA
@@ -17,6 +18,8 @@ class Main_controller():# Mainの制御クラス
         time_step = 0
 
         while not goal_flag and time_step < MAX_ITERATIONS:
+            start_time = time.time()
+
             # Input calculation
             paths, opt_path = self.controller.calc_input(self.robot, [])
             
@@ -30,6 +33,10 @@ class Main_controller():# Mainの制御クラス
             dis_to_goal = np.sqrt((g_x-self.robot.x)**2 + (g_y-self.robot.y)**2)
             if dis_to_goal < GOAL_THRESHOLD:
                 goal_flag = True
+
+            end_time = time.time()
+            cycle_time = end_time - start_time
+            print(f"Cycle {time_step} processing time: {cycle_time:.4f} seconds")
 
             time_step += 1
 
