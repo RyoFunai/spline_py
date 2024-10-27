@@ -6,7 +6,7 @@ ROBOT_INIT_Y = -5.0
 ROBOT_INIT_TH = 2.7
 
 # DWA parameters
-MAX_SPEED = 5.0
+MAX_SPEED = 10.0
 MIN_SPEED = 0.0
 MAX_YAWRATE = math.pi
 MIN_YAWRATE = -math.pi
@@ -42,7 +42,7 @@ RIGHT_LANE_BOUND_FILE = 'csv_files/right_lane_bound.csv'
 CENTER_LANE_LINE_FILE = 'csv_files/center_lane_line.csv'
 
 # Main parameters
-MAX_ITERATIONS = 10
+MAX_ITERATIONS = 15000
 
 X_MIN, X_MAX = -30, 60
 Y_MIN, Y_MAX = -20, 70

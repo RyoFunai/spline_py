@@ -6,6 +6,7 @@ from config import *
 from course import Course
 import sys
 from config import LOOKAHEAD_DISTANCE
+import time
 
 class Simulator_DWA_robot:
     def __init__(self):
@@ -69,24 +70,29 @@ class DWA():
         self.traj_opt = []
 
     def calc_input(self, robot, obstacles):
-        # Path作成
+        paths = self._generate_paths(robot)
+        target_point = self._get_target_point(robot)
+        opt_path = self._evaluate_paths(paths, target_point, robot, obstacles)
+        self._update_trajectory(opt_path, target_point)
+        return paths, opt_path
+
+    def _generate_paths(self, robot):
         paths = self._make_path(robot)
         print(f"Number of paths generated: {len(paths)}")
-        
-        # Path評価
+        return paths
+
+    def _get_target_point(self, robot):
         g_x, g_y = self.course.get_next_target_point(robot.x, robot.y, robot.th, LOOKAHEAD_DISTANCE)
         print(f"Next target point: ({g_x}, {g_y})")
-        
-        opt_path = self._eval_path(paths, g_x, g_y, robot, obstacles)
+        return g_x, g_y
 
+    def _update_trajectory(self, opt_path, target_point):
         self.traj_opt.append(opt_path)
         if not hasattr(self, 'traj_g_x'):
             self.traj_g_x = []
             self.traj_g_y = []
-        self.traj_g_x.append(g_x)
-        self.traj_g_y.append(g_y)
-
-        return paths, opt_path
+        self.traj_g_x.append(target_point[0])
+        self.traj_g_y.append(target_point[1])
 
     def _make_path(self, state): 
         # 角度と速度の範囲算出
@@ -141,85 +147,70 @@ class DWA():
 
         return min_ang_velo, max_ang_velo, min_velo, max_velo
 
-    def _eval_path(self, paths, g_x, g_y, state, obstacles):
-        # 一番近い障害物判定
-        nearest_obs = self._calc_nearest_obs(state, obstacles)
+    def _evaluate_paths(self, paths, target_point, state, obstacles):
         valid_paths = []
-        score_heading_angles = []
-        score_heading_velos = []
-        score_obstacles = []
-        # valid_paths_count = 0
-        
-        # 全てのpathで評価を検索
         for path in paths:
-            # コース境界内にあるかチェック
-            # if not self.course.is_path_within_bounds(path.x, path.y):
-            #     continue
-            # パスが有効かチェック（スコアにinfやnanが含まれていないか）
-            # valid_paths_count += 1
-            # (1) heading_angle
-            angle_score = self._heading_angle(path, g_x, g_y)
-            # (2) heading_velo
-            velo_score = self._heading_velo(path)
-            # (3) obstacle
-            obs_score = self._obstacle(path, nearest_obs)
-            # パスが有効かチェック（スコアにinfやnanが含まれていないか）
-            if np.isfinite(angle_score) and np.isfinite(velo_score) and np.isfinite(obs_score):
-                score_heading_angles.append(angle_score)
-                score_heading_velos.append(velo_score)
-                score_obstacles.append(obs_score)
-                valid_paths.append(path)
+            out_of_bounds_index = self.course.is_path_within_bounds(path.x, path.y)
+            if out_of_bounds_index == -1:
+                scores = self._calculate_path_scores(path, target_point, obstacles)
+                if all(np.isfinite(score) for score in scores):
+                    valid_paths.append((path, scores))
             else:
-                # 無効なパスはスキップ
-                continue
+                # Truncate the path at the out-of-bounds point
+                path.x = path.x[:out_of_bounds_index]
+                path.y = path.y[:out_of_bounds_index]
+                path.th = path.th[:out_of_bounds_index]
+                if len(path.x) > 0:
+                    scores = self._calculate_path_scores(path, target_point, obstacles)
+                    if all(np.isfinite(score) for score in scores):
+                        valid_paths.append((path, scores))
+                else:
+                    print(f"Path truncated to zero length at index {out_of_bounds_index}")
 
-        # print(f"Valid paths: {valid_paths_count}")
-        
-        # 有効なパスが存在しない場合
         if not valid_paths:
-            print("No valid paths found. All paths are either out of bounds or colliding with obstacles.")
-            raise ValueError("有効なPathが存在しません。全てのPathがコース外か障害物と衝突しています。")
+            raise ValueError("No valid paths found. All paths are either out of bounds or colliding with obstacles.")
 
-        # スコアの正規化
-        score_heading_angles = min_max_normalize(score_heading_angles)
-        score_heading_velos = min_max_normalize(score_heading_velos)
-        score_obstacles = min_max_normalize(score_obstacles)
+        print(f"Number of valid paths: {len(valid_paths)}")
+        normalized_scores = self._normalize_scores(valid_paths, target_point)
+        opt_path = self._select_optimal_path(valid_paths, normalized_scores)
 
-        # ゴールへの距離を計算
-        distances_to_goal = []
-        for path in valid_paths:
-            last_x = path.x[-1]
-            last_y = path.y[-1]
-            distance = math.hypot(g_x - last_x, g_y - last_y)
-            distances_to_goal.append(distance)
+        return opt_path
 
-        # 距離を反転（近いほど良い）して正規化
-        inverted_distances = [-d for d in distances_to_goal]
-        distances_normalized = min_max_normalize(inverted_distances)
+    def _calculate_path_scores(self, path, target_point, obstacles):
+        angle_score = self._heading_angle(path, *target_point)
+        velo_score = self._heading_velo(path)
+        obs_score = self._obstacle(path, obstacles)
+        return angle_score, velo_score, obs_score
 
-        # スコアの正規化後の距離を格納（オプションで詳細な評価用）
-        # distances_normalized = min_max_normalize(distances_to_goal)  # そのまま正規化も可能
+    def _normalize_scores(self, valid_paths, target_point):
+        angle_scores, velo_scores, obs_scores = zip(*[scores for _, scores in valid_paths])
+        
+        normalized_scores = {
+            'angle': min_max_normalize(angle_scores),
+            'velo': min_max_normalize(velo_scores),
+            'obs': min_max_normalize(obs_scores),
+            'distance': self._calculate_distance_scores(valid_paths, target_point)
+        }
+        
+        return normalized_scores
 
-        # 最適なpathを探索
-        score = -float('inf')  # スコアの初期値を負の無限大に設定
-        opt_path = None        # opt_path を初期化
+    def _calculate_distance_scores(self, valid_paths, target_point):
+        distances = [-math.hypot(target_point[0] - path.x[-1], target_point[1] - path.y[-1]) for path, _ in valid_paths]
+        return min_max_normalize(distances)
 
-        for k in range(len(valid_paths)):
-            temp_score = (self.weight_angle * score_heading_angles[k] + 
-                          self.weight_velo * score_heading_velos[k] + 
-                          self.weight_obs * score_obstacles[k] +
-                          self.weight_distance * distances_normalized[k])  # 距離スコアを加算
+    def _select_optimal_path(self, valid_paths, normalized_scores):
+        best_score = -float('inf')
+        opt_path = None
 
-            if temp_score > score:
-                opt_path = valid_paths[k]
-                score = temp_score
-
-        if opt_path is None:
-            # フォールバック: 有効なパスがあれば最初を選択
-            if valid_paths:
-                opt_path = valid_paths[0]
-            else:
-                raise ValueError("Pathが生成されていません。")
+        for i, (path, _) in enumerate(valid_paths):
+            score = (self.weight_angle * normalized_scores['angle'][i] +
+                     self.weight_velo * normalized_scores['velo'][i] +
+                     self.weight_obs * normalized_scores['obs'][i] +
+                     self.weight_distance * normalized_scores['distance'][i])
+            
+            if score > best_score:
+                best_score = score
+                opt_path = path
 
         return opt_path
 
@@ -263,29 +254,26 @@ class DWA():
 
         return nearest_obs
 
-    def _obstacle(self, path, nearest_obs):
-        # 障害物回避（エリアに入ったらその線は使わない）/ (障害物ともっとも近い距離距離)))
-        score_obstacle = 0.1
-        temp_dis_to_obs = 0.0
+    def _obstacle(self, path, obstacles):
+        min_distance = float('inf')
+        
+        for x, y in zip(path.x, path.y):
+            # Check existing obstacles
+            for obs in obstacles:
+                distance = math.hypot(x - obs.x, y - obs.y)
+                if distance < obs.size:
+                    return -float('inf')
+                min_distance = min(min_distance, distance)
+            
+            # Check course boundary
+            boundary_distance = self.course.distance_to_course_boundary(x, y)
+            min_distance = min(min_distance, boundary_distance)
+        
+        return min_distance
 
-        for i in range(len(path.x)):
-            for obs in nearest_obs: 
-                temp_dis_to_obs = math.sqrt((path.x[i] - obs.x) * (path.x[i] - obs.x) + (path.y[i] - obs.y) *  (path.y[i] - obs.y))
 
-                if temp_dis_to_obs < score_obstacle:
-                    score_obstacle = temp_dis_to_obs # 一番近いところ
 
-                # そもそも中に入ってる判定
-                if temp_dis_to_obs < obs.size:
-                    score_obstacle = -float('inf')
-                    break
 
-            else:
-                continue
-
-            break
-
-        return score_obstacle
 
 
 

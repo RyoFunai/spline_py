@@ -4,6 +4,7 @@ from robot import Two_wheeled_robot
 from goal import Const_goal
 from dwa import DWA
 from config import DT, GOAL_THRESHOLD, MAX_ITERATIONS, LOOKAHEAD_DISTANCE
+from animation import Animation_robot
 
 
 class Main_controller():# Mainの制御クラス
@@ -12,10 +13,13 @@ class Main_controller():# Mainの制御クラス
         self.goal_maker = Const_goal()
         self.controller = DWA()
         self.samplingtime = DT
+        self.animation = Animation_robot()
 
     def run_to_goal(self):
         goal_flag = False
         time_step = 0
+
+        self.animation.initialize_animation(self.controller.course)
 
         while not goal_flag and time_step < MAX_ITERATIONS:
             start_time = time.time()
@@ -33,6 +37,8 @@ class Main_controller():# Mainの制御クラス
             dis_to_goal = np.sqrt((g_x-self.robot.x)**2 + (g_y-self.robot.y)**2)
             if dis_to_goal < GOAL_THRESHOLD:
                 goal_flag = True
+
+            self.animation.update_frame(self.robot, paths, opt_path, g_x, g_y, time_step)
 
             end_time = time.time()
             cycle_time = end_time - start_time

@@ -63,5 +63,14 @@ class Course:
         for i, (x, y) in enumerate(zip(path_x, path_y)):
             if not self.is_within_bounds(x, y):
                 print(f"Path point {i} out of bounds: ({x}, {y})")
-                return False
-        return True
+                return i
+        return -1  # All points are within bounds
+
+    def distance_to_course_boundary(self, x, y):
+        left_distances = np.cross(self.left_lane[1:, :2] - self.left_lane[:-1, :2], np.array([x, y]) - self.left_lane[:-1, :2])
+        right_distances = np.cross(self.right_lane[1:, :2] - self.right_lane[:-1, :2], np.array([x, y]) - self.right_lane[:-1, :2])
+        
+        min_left_distance = np.min(np.abs(left_distances))
+        min_right_distance = np.min(np.abs(right_distances))
+        
+        return min(min_left_distance, min_right_distance)

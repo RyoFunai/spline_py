@@ -176,3 +176,31 @@ class Animation_robot():
     def maximize_window(self):
         manager = plt.get_current_fig_manager()
         manager.full_screen_toggle()  # toggle fullscreen mode
+
+    def initialize_animation(self, course):
+        self.fig_set()
+        self.plot_course(course)
+        self.traj_img, = self.axis.plot([], [], 'k', linestyle='dashed')
+        self.robot_img, = self.axis.plot([], [], 'k')
+        self.robot_angle_img, = self.axis.plot([], [], 'k')
+        self.img_goal, = self.axis.plot([], [], '*', color='b', markersize=15)
+        self.traj_opt_img, = self.axis.plot([], [], 'r', linestyle='dashed')
+        self.step_text = self.axis.text(0.05, 0.9, '', transform=self.axis.transAxes)
+        self.dwa_paths = [Path_anim(self.axis) for _ in range(100)]
+        plt.ion()
+        plt.show()
+
+    def update_frame(self, robot, paths, opt_path, g_x, g_y, time_step):
+        self.traj_img.set_data(robot.traj_x, robot.traj_y)
+        circle_x, circle_y, circle_line_x, circle_line_y = write_circle(robot.x, robot.y, robot.th, circle_size=0.2)
+        self.robot_img.set_data(circle_x, circle_y)
+        self.robot_angle_img.set_data(circle_line_x, circle_line_y)
+        self.img_goal.set_data([g_x], [g_y])
+        self.traj_opt_img.set_data(opt_path.x, opt_path.y)
+        self.step_text.set_text(f'step = {time_step}')
+
+        for k, path in enumerate(paths[:100]):
+            self.dwa_paths[k].set_graph_data(path.x, path.y)
+
+        self.fig.canvas.draw()
+        self.fig.canvas.flush_events()
