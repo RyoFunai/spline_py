@@ -70,6 +70,7 @@ class DWA():
         self.traj_opt = []
 
     def calc_input(self, robot, obstacles):
+        print("obstacles = ", obstacles)
         paths = self._generate_paths(robot)
         target_point = self._get_target_point(robot)
         opt_path = self._evaluate_paths(paths, target_point, robot, obstacles)
@@ -150,22 +151,10 @@ class DWA():
     def _evaluate_paths(self, paths, target_point, state, obstacles):
         valid_paths = []
         for path in paths:
-            out_of_bounds_index = self.course.is_path_within_bounds(path.x, path.y)
-            if out_of_bounds_index == -1:
-                scores = self._calculate_path_scores(path, target_point, obstacles)
-                if all(np.isfinite(score) for score in scores):
-                    valid_paths.append((path, scores))
-            else:
-                # Truncate the path at the out-of-bounds point
-                path.x = path.x[:out_of_bounds_index]
-                path.y = path.y[:out_of_bounds_index]
-                path.th = path.th[:out_of_bounds_index]
-                if len(path.x) > 0:
-                    scores = self._calculate_path_scores(path, target_point, obstacles)
-                    if all(np.isfinite(score) for score in scores):
-                        valid_paths.append((path, scores))
-                else:
-                    print(f"Path truncated to zero length at index {out_of_bounds_index}")
+            scores = self._calculate_path_scores(path, target_point, obstacles)
+            print(f"Path scores: {scores}")  # スコアの確認
+            if all(np.isfinite(score) for score in scores):
+                valid_paths.append((path, scores))
 
         if not valid_paths:
             raise ValueError("No valid paths found. All paths are either out of bounds or colliding with obstacles.")
@@ -243,7 +232,7 @@ class DWA():
         return score_heading_velo
 
     def _calc_nearest_obs(self, state, obstacles):
-        area_dis_to_obs = 5 # パラメー（何メートル考慮するか，本当は制動距離）
+        area_dis_to_obs = 1 # パラメー（何メートル考慮するか，本当は制動距離）
         nearest_obs = [] # あるエリアに入ってる障害物
 
         for obs in obstacles:
@@ -253,6 +242,7 @@ class DWA():
                 nearest_obs.append(obs)
 
         return nearest_obs
+
 
     def _obstacle(self, path, obstacles):
         min_distance = float('inf')
@@ -270,7 +260,6 @@ class DWA():
             min_distance = min(min_distance, boundary_distance)
         
         return min_distance
-
 
 
 
