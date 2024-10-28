@@ -12,8 +12,8 @@ MAX_YAWRATE = math.pi
 MIN_YAWRATE = -math.pi
 MAX_ACCEL = 1.0
 MAX_DYAWRATE = 100.0 * math.pi / 180.0
-V_RESOLUTION = 0.02
-YAWRATE_RESOLUTION = 0.02
+V_RESOLUTION = 0.04
+YAWRATE_RESOLUTION = 0.04
 
 # Simulator parameters
 DT = 0.1  # Main_controllerとdwaで共通のsamplingtime
@@ -41,8 +41,6 @@ LEFT_LANE_BOUND_FILE = 'csv_files/left_lane_bound.csv'
 RIGHT_LANE_BOUND_FILE = 'csv_files/right_lane_bound.csv'
 CENTER_LANE_LINE_FILE = 'csv_files/center_lane_line.csv'
 
-# Main parameters
-MAX_ITERATIONS = 15000
 
 X_MIN, X_MAX = -30, 60
 Y_MIN, Y_MAX = -20, 70

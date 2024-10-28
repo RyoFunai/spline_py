@@ -152,7 +152,7 @@ class DWA():
         valid_paths = []
         for path in paths:
             scores = self._calculate_path_scores(path, target_point, obstacles)
-            print(f"Path scores: {scores}")  # スコアの確認
+            # print(f"Path scores: {scores}")  # スコアの確認
             if all(np.isfinite(score) for score in scores):
                 valid_paths.append((path, scores))
 

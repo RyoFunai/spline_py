@@ -169,9 +169,14 @@ class Animation_robot():
         return self.dwa_imgs
 
     def plot_course(self, course):
-        self.axis.plot(course.left_lane[:, 0], course.left_lane[:, 1], 'k-', linewidth=2)
-        self.axis.plot(course.right_lane[:, 0], course.right_lane[:, 1], 'k-', linewidth=2)
-        self.axis.plot(course.center_lane[:, 0], course.center_lane[:, 1], 'r--', linewidth=1)
+        # 左の境界線を点で描画
+        self.axis.plot(course.left_lane[:, 0], course.left_lane[:, 1], 'k.', markersize=2)
+        
+        # 右の境界線を点で描画
+        self.axis.plot(course.right_lane[:, 0], course.right_lane[:, 1], 'k.', markersize=2)
+        
+        # 中心線を点で描画
+        self.axis.plot(course.center_lane[:, 0], course.center_lane[:, 1], 'r.', markersize=2)
 
     def maximize_window(self):
         manager = plt.get_current_fig_manager()
