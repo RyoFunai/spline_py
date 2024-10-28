@@ -1,6 +1,7 @@
 from controller import Main_controller
 from animation import Animation_robot
 from utils import load_obstacles
+from obstacle import Obstacle
 
 def main():
     controller = Main_controller()
@@ -12,9 +13,12 @@ def main():
     animation = Animation_robot()
     animation.fig_set()
     animation.maximize_window()
+    view_obstacles = []
+    view_obstacles.append(Obstacle(0, 0, size=0.2))  # サイズは必要に応じて調整
+    
     animation.func_anim_plot(
         traj_x, traj_y, traj_th, traj_paths,
-        traj_g_x, traj_g_y, traj_opt, obstacles, course
+        traj_g_x, traj_g_y, traj_opt, view_obstacles, course
     )
 
 if __name__ == '__main__':

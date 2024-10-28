@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as ani
 import math
 import sys
-from config import X_MIN, X_MAX, Y_MIN, Y_MAX
+from config import ANIMATION_INTERVAL
 
 # 円を書く
 def write_circle(center_x, center_y, angle, circle_size=0.2):#人の大きさは半径15cm
@@ -110,8 +110,8 @@ class Animation_robot():
         self.step_text = self.axis.text(0.05, 0.9, '', transform=self.axis.transAxes)
 
 
-        animation = ani.FuncAnimation(self.fig, self._update_anim, interval=100, \
-                              frames=len(traj_g_x))
+        animation = ani.FuncAnimation(self.fig, self._update_anim, frames=len(traj_g_x), \
+                              interval=ANIMATION_INTERVAL)
 
 
         # print('save_animation?')
@@ -169,9 +169,9 @@ class Animation_robot():
         return self.dwa_imgs
 
     def plot_course(self, course):
-        self.axis.plot(course.left_lane[:, 0], course.left_lane[:, 1], 'k-', linewidth=2)
-        self.axis.plot(course.right_lane[:, 0], course.right_lane[:, 1], 'k-', linewidth=2)
-        self.axis.plot(course.center_lane[:, 0], course.center_lane[:, 1], 'r--', linewidth=1)
+        self.axis.plot(course.left_lane[:, 0], course.left_lane[:, 1], 'k.', linewidth=2)
+        self.axis.plot(course.right_lane[:, 0], course.right_lane[:, 1], 'k.', linewidth=2)
+        self.axis.plot(course.center_lane[:, 0], course.center_lane[:, 1], 'r.', linewidth=1)
 
     def maximize_window(self):
         manager = plt.get_current_fig_manager()

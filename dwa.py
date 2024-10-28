@@ -252,7 +252,7 @@ class DWA():
         return score_heading_velo
 
     def _calc_nearest_obs(self, state, obstacles):
-        area_dis_to_obs = 1 # パラメー（何メートル考慮するか，本当は制動距離）
+        area_dis_to_obs = 5 # パラメー（何メートル考慮するか，本当は制動距離）
         nearest_obs = [] # あるエリアに入ってる障害物
         print("state.x:", state.x, "state.y:", state.y)
         for obs in obstacles:
