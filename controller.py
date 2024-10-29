@@ -29,7 +29,6 @@ class Main_controller():# Mainの制御クラス
 
             g_x, g_y = self.controller.course.get_next_target_point(self.robot.x, self.robot.y, self.robot.th, LOOKAHEAD_DISTANCE)
             
-            print(g_x, g_y)
             dis_to_goal = np.sqrt((g_x-self.robot.x)**2 + (g_y-self.robot.y)**2)
             if dis_to_goal < GOAL_THRESHOLD:
                 goal_flag = True

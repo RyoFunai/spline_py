@@ -1,14 +1,13 @@
 import math
 import numpy as np
 import csv
-from config import LEFT_LANE_BOUND_FILE, RIGHT_LANE_BOUND_FILE
+from config import LEFT_LANE_BOUND_FILE, RIGHT_LANE_BOUND_FILE, X_OFFSET, Y_OFFSET
 from obstacle import Obstacle
 
 def min_max_normalize(data):
-
     data = np.array(data, dtype=np.float64)
 
-    # データにinfやnanが含まれていないか確認
+    # Check if data contains inf or NaN
     if not np.all(np.isfinite(data)):
         raise ValueError("データに無限大またはNaNが含まれています。")
 
@@ -21,9 +20,9 @@ def min_max_normalize(data):
         normalized_data = (data - min_data) / (max_data - min_data)
 
     return normalized_data
+
 # 角度補正用
 def angle_range_corrector(angle):
-
     if angle > math.pi:
         while angle > math.pi:
             angle -=  2 * math.pi
@@ -34,15 +33,15 @@ def angle_range_corrector(angle):
     return angle
 
 # 円を書く
-def write_circle(center_x, center_y, angle, circle_size=0.2):#人の大きさは半径15cm
+def write_circle(center_x, center_y, angle, circle_size=0.2):  # 人の大きさは半径15cm
     # 初期化
-    circle_x = [] #位置を表す円のx
-    circle_y = [] #位置を表す円のy
+    circle_x = []  # 位置を表す円のx
+    circle_y = []  # 位置を表す円のy
 
-    steps = 100 #円を書く分解能はこの程度で大丈夫
+    steps = 100  # 円を書く分解能はこの程度で大丈夫
     for i in range(steps):
-        circle_x.append(center_x + circle_size*math.cos(i*2*math.pi/steps))
-        circle_y.append(center_y + circle_size*math.sin(i*2*math.pi/steps))
+        circle_x.append(center_x + circle_size * math.cos(i * 2 * math.pi / steps))
+        circle_y.append(center_y + circle_size * math.sin(i * 2 * math.pi / steps))
 
     circle_line_x = [center_x, center_x + math.cos(angle) * circle_size]
     circle_line_y = [center_y, center_y + math.sin(angle) * circle_size]
@@ -63,6 +62,9 @@ def load_obstacles():
                         continue  # 不正な行をスキップ
                     try:
                         x, y = map(float, row[:2])
+                        # Apply offset to obstacle coordinates
+                        x -= X_OFFSET
+                        y -= Y_OFFSET
                         obstacles.append(Obstacle(x, y, size=0.2))  # サイズは必要に応じて調整
                     except ValueError:
                         print(f"無効なデータ行: {row}")

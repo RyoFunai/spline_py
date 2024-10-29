@@ -60,7 +60,6 @@ class DWA():
         try:
             self.course = Course(LEFT_LANE_BOUND_FILE, RIGHT_LANE_BOUND_FILE, CENTER_LANE_LINE_FILE)
         except FileNotFoundError as e:
-            print(f"ラー: {e}")
             print("CSVファイルのパスが正しいか確認してください。")
             sys.exit(1)
 
@@ -75,7 +74,6 @@ class DWA():
         
         # Path評価
         g_x, g_y = self.course.get_next_target_point(robot.x, robot.y, robot.th, LOOKAHEAD_DISTANCE)
-        print(f"Next target point: ({g_x}, {g_y})")
         
         opt_path = self._eval_path(paths, g_x, g_y, robot, obstacles)
 
@@ -241,8 +239,6 @@ class DWA():
         # 最大と最小をひっくり返す
         score_angle = math.pi - score_angle
 
-        # print('score_sngle = {0}' .format(score_angle))
-
         return score_angle
 
     def _heading_velo(self, path): # 速くんでいるか（直進）
@@ -254,7 +250,6 @@ class DWA():
     def _calc_nearest_obs(self, state, obstacles):
         area_dis_to_obs = 5 # パラメー（何メートル考慮するか，本当は制動距離）
         nearest_obs = [] # あるエリアに入ってる障害物
-        print("state.x:", state.x, "state.y:", state.y)
         for obs in obstacles:
             temp_dis_to_obs = math.sqrt((state.x - obs.x) ** 2 + (state.y - obs.y) ** 2)
 
@@ -274,9 +269,9 @@ class DWA():
 
                 if temp_dis_to_obs < score_obstacle:
                     score_obstacle = temp_dis_to_obs # 一番近いところ
-
                 # そもそも中に入ってる判定
-                if temp_dis_to_obs < obs.size:
+                if temp_dis_to_obs < obs.size + 0.5:
+                    print("*************障害物に入った")
                     score_obstacle = -float('inf')
                     break
 
@@ -284,7 +279,6 @@ class DWA():
                 continue
 
             break
-
         return score_obstacle
 
 

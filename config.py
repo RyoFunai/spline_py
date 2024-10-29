@@ -23,7 +23,7 @@ ROBOT_RADIUS = 0.2
 # Cost parameters
 WEIGHT_ANGLE = 0.04
 WEIGHT_VELOCITY = 0.2
-WEIGHT_OBSTACLE = 0.1
+WEIGHT_OBSTACLE = 1000.0
 WEIGHT_DISTANCE = 1.0  # ゴールへの距離の重み
 # Goal parameters
 GOAL_THRESHOLD = 0.01
@@ -42,7 +42,10 @@ RIGHT_LANE_BOUND_FILE = 'csv_files/right_lane_bound.csv'
 CENTER_LANE_LINE_FILE = 'csv_files/center_lane_line.csv'
 
 # Main parameters
-MAX_ITERATIONS = 1000
+MAX_ITERATIONS = 1500
 
 # DWA parameters
-LOOKAHEAD_DISTANCE = 10.0
+LOOKAHEAD_DISTANCE = 9.0
+
+X_OFFSET = 89633.15625
+Y_OFFSET = 43127.796875

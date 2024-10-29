@@ -1,8 +1,7 @@
 import numpy as np
 import os
+from config import X_OFFSET, Y_OFFSET
 
-X_OFFSET = 89633.15625
-Y_OFFSET = 43127.796875
 
 class Course:
     def __init__(self, left_lane_file, right_lane_file, center_lane_file):
@@ -48,9 +47,6 @@ class Course:
             if distance >= lookahead_distance:
                 angle_to_point = np.arctan2(point[1] - y, point[0] - x)
                 angle_diff = abs(angle_to_point - th)
-                print("*************distance = ", distance)
-                print("*************point = ", point)
-                print("*************angle_diff = ", angle_diff)
                 return point[0], point[1]
 
         return self.center_lane[-1][0], self.center_lane[-1][1]
