@@ -1,18 +1,33 @@
 import numpy as np
 import os
-from config import X_OFFSET, Y_OFFSET
+from config import X_OFFSET, Y_OFFSET, SPECIAL_FORMAT
 
 
 class Course:
     def __init__(self, left_lane_file, right_lane_file, center_lane_file):
-        self.left_lane = self._load_csv(left_lane_file)
-        self.right_lane = self._load_csv(right_lane_file)
-        self.center_lane = self._load_csv(center_lane_file)
+        self.left_lane = self._load_csv_side(left_lane_file)
+        self.right_lane = self._load_csv_side(right_lane_file)
+        self.center_lane = self._load_csv_center(center_lane_file)
 
-    def _load_csv(self, file_path):
+    def _load_csv_center(self, file_path):
+        if not os.path.exists(file_path):
+            raise FileNotFoundError(f"ファイルが見つかりません: {file_path}")
+        if SPECIAL_FORMAT:
+            # 特殊フォーマット用の読み込み設定
+            data = np.loadtxt(file_path, delimiter=';', skiprows=3, usecols=(1, 2))
+            # data = np.loadtxt(file_path, delimiter=';', skiprows=1)
+
+        else:
+            # 通常の読み込み
+            data = np.loadtxt(file_path, delimiter=',', skiprows=1)
+
+        return self._apply_offset(data)
+
+    def _load_csv_side(self, file_path):
         if not os.path.exists(file_path):
             raise FileNotFoundError(f"ファイルが見つかりません: {file_path}")
         data = np.loadtxt(file_path, delimiter=',', skiprows=1)
+
         return self._apply_offset(data)
 
     def _apply_offset(self, data):
@@ -33,11 +48,11 @@ class Course:
 
     def get_next_target_point(self, x, y, th, lookahead_distance=2.0):
         nearest_index = self._find_nearest_index(x, y)
-        
+
         for i in range(nearest_index, len(self.center_lane)):
             point = self.center_lane[i]
             distance = np.sqrt((point[0] - x)**2 + (point[1] - y)**2)
-            
+
             # if distance >= lookahead_distance:
             #     angle_to_point = np.arctan2(point[1] - y, point[0] - x)
             #     angle_diff = abs(angle_to_point - th)

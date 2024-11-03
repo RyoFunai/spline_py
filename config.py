@@ -10,7 +10,7 @@ MAX_SPEED = 20.0
 MIN_SPEED = 0.0
 MAX_YAWRATE = math.pi
 MIN_YAWRATE = -math.pi
-MAX_ACCEL = 1.0
+MAX_ACCEL = 3.0
 MAX_DYAWRATE = 100.0 * math.pi / 180.0
 V_RESOLUTION = 0.02
 YAWRATE_RESOLUTION = 0.02
@@ -37,12 +37,14 @@ ANIMATION_INTERVAL = 10
 NUM_OBSTACLES = 50
 
 # Course parameters
+SPECIAL_FORMAT = True
 LEFT_LANE_BOUND_FILE = 'csv_files/left_lane_bound.csv'
 RIGHT_LANE_BOUND_FILE = 'csv_files/right_lane_bound.csv'
-CENTER_LANE_LINE_FILE = 'csv_files/center_lane_line.csv'
+CENTER_LANE_LINE_FILE = 'csv_files/traj_race_cl_out-in-out_v10.csv'
+# CENTER_LANE_LINE_FILE = 'csv_files/center_lane_line.csv'
 
 # Main parameters
-MAX_ITERATIONS = 1500
+MAX_ITERATIONS = 500
 
 # DWA parameters
 LOOKAHEAD_DISTANCE = 9.0

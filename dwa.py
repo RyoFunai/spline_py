@@ -71,10 +71,10 @@ class DWA():
         # Path作成
         paths = self._make_path(robot)
         print(f"Number of paths generated: {len(paths)}")
-        
+
         # Path評価
         g_x, g_y = self.course.get_next_target_point(robot.x, robot.y, robot.th, LOOKAHEAD_DISTANCE)
-        
+
         opt_path = self._eval_path(paths, g_x, g_y, robot, obstacles)
 
         self.traj_opt.append(opt_path)
@@ -86,10 +86,10 @@ class DWA():
 
         return paths, opt_path
 
-    def _make_path(self, state): 
+    def _make_path(self, state):
         # 角度と速度の範囲算出
         min_ang_velo, max_ang_velo, min_velo, max_velo = self._calc_range_velos(state)
-
+        print(f"min_ang_velo: {min_ang_velo}, max_ang_velo: {max_ang_velo}, min_velo: {min_velo}, max_velo: {max_velo}")
         # 全てのpathのリスト
         paths = []
 
@@ -147,7 +147,7 @@ class DWA():
         score_heading_velos = []
         score_obstacles = []
         # valid_paths_count = 0
-        
+
         # 全てのpathで評価を検索
         for path in paths:
             # コース境界内にあるかチェック
@@ -172,7 +172,7 @@ class DWA():
                 continue
 
         # print(f"Valid paths: {valid_paths_count}")
-        
+
         # 有効なパスが存在しない場合
         if not valid_paths:
             print("No valid paths found. All paths are either out of bounds or colliding with obstacles.")
@@ -203,8 +203,8 @@ class DWA():
         opt_path = None        # opt_path を初期化
 
         for k in range(len(valid_paths)):
-            temp_score = (self.weight_angle * score_heading_angles[k] + 
-                          self.weight_velo * score_heading_velos[k] + 
+            temp_score = (self.weight_angle * score_heading_angles[k] +
+                          self.weight_velo * score_heading_velos[k] +
                           self.weight_obs * score_obstacles[k] +
                           self.weight_distance * distances_normalized[k])  # 距離スコアを加算
 
